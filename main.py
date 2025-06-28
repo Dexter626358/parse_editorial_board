@@ -35,7 +35,7 @@ def make_profile_html(profile: dict) -> str:
     if field("Email", profile["Email"]):
         html_block.append(
             f'<p style="padding-left: 80px;"><strong>E-mail:</strong> '
-            f'<a href="mailto:{html.escape(profile["Email"])}">{html.escape(profile["Email"])}</a></p>'
+            f'<a href="mailto:{html.escape(profile["Email"])} "target="_blank" rel="noopener">{html.escape(profile["Email"])}</a></p>'
         )
 
     if field("SPIN", profile["SPIN"]):
@@ -98,7 +98,7 @@ def main():
                 )
 
     # Сохраняем HTML на русском
-    html_output = f"""<div id=\"editorialTeam\">\n{''.join(profiles_html)}\n</div>"""
+    html_output = ''.join(profiles_html)
     with open(output_dir / "editor_profiles.html", "w", encoding="utf-8") as f:
         f.write(html_output.strip())
 
@@ -107,7 +107,7 @@ def main():
         f.write("\n".join(english_lines))
 
     # HTML на английском
-    english_html_output = f"""<div id=\"editorialTeam\">\n{''.join(english_html)}\n</div>"""
+    english_html_output = ''.join(english_html)
     with open(output_dir / "editor_profiles_en.html", "w", encoding="utf-8") as f:
         f.write(english_html_output.strip())
 
