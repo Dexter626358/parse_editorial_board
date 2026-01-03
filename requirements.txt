@@ -4,3 +4,5 @@ python-docx==1.1.2
 python-dateutil==2.9.0.post0
 pytz==2024.1
 tzdata==2024.1
+Flask==3.0.0
+Werkzeug==3.0.1

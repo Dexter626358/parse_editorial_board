@@ -1,4 +1,4 @@
-from editor_parser import parse_profile_from_docx
+from editor_parser import parse_profiles_from_docx
 from pathlib import Path
 import html
 from typing import Optional
@@ -72,12 +72,22 @@ def main():
     profiles_html = []
     english_lines = []
     english_html = []
-
+    
+    # Собираем все профили из всех файлов
+    all_profiles = []
     for docx_file in input_dir.glob("*.docx"):
         print(f"Обработка: {docx_file.name}")
-        profile = parse_profile_from_docx(docx_file)
-
+        profiles = parse_profiles_from_docx(docx_file)
+        print(f"  Найдено анкет: {len(profiles)}")
+        all_profiles.extend(profiles)
+    
+    # Обрабатываем каждый профиль с разделителями
+    for idx, profile in enumerate(all_profiles):
         profiles_html.append(make_profile_html(profile["ru"]))
+        
+        # Добавляем перенос строки между профилями (кроме последнего)
+        if idx < len(all_profiles) - 1:
+            profiles_html.append('<br>')
 
         if profile["en"]["Name, position, affiliation"]:
             english_lines.append(profile["en"]["Name, position, affiliation"])
@@ -96,6 +106,10 @@ def main():
                 english_html.append(
                     f'<p style="padding-left: 80px;"><strong>Keywords:&nbsp;</strong>{html.escape(profile["en"]["Keywords"])}</p>'
                 )
+        
+        # Добавляем перенос строки в английской версии (кроме последнего)
+        if idx < len(all_profiles) - 1:
+            english_html.append('<br>')
 
     # Сохраняем HTML на русском
     html_output = ''.join(profiles_html)

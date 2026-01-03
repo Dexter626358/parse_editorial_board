@@ -1,24 +1,20 @@
 from docx import Document
 from pathlib import Path
-from typing import Dict
+from typing import Dict, List
 import re
 
-def parse_profile_from_docx(filepath: Path) -> Dict[str, Dict[str, str]]:
-    doc = Document(filepath)
-    data = {}
-    data_en = {}
-
-    for table in doc.tables:
-        for row in table.rows:
-            cells = row.cells
-            if len(cells) >= 2:
-                key = cells[0].text.strip()
-                value_ru = cells[1].text.strip()
-                value_en = cells[2].text.strip() if len(cells) >= 3 else ""
-                if key:
-                    data[key] = value_ru
-                    data_en[key] = value_en
-
+def parse_table_to_profile(table, data: Dict[str, str], data_en: Dict[str, str]) -> Dict[str, Dict[str, str]]:
+    """
+    Парсит одну таблицу в профиль.
+    
+    Args:
+        table: Таблица из документа
+        data: Словарь для русских данных
+        data_en: Словарь для английских данных
+    
+    Returns:
+        Профиль в формате {"ru": {...}, "en": {...}}
+    """
     def normalize(text: str) -> str:
         return re.sub(r"[^a-zа-я0-9]", "", text.lower())
 
@@ -97,3 +93,65 @@ def parse_profile_from_docx(filepath: Path) -> Dict[str, Dict[str, str]]:
             "Keywords": clean_text(keywords_en)
         }
     }
+
+
+def parse_profile_from_docx(filepath: Path) -> Dict[str, Dict[str, str]]:
+    """
+    Парсит первый профиль из документа (для обратной совместимости).
+    Использует parse_profiles_from_docx и возвращает первый профиль.
+    """
+    profiles = parse_profiles_from_docx(filepath)
+    return profiles[0] if profiles else {
+        "ru": {"ФИО, звание и место работы": "", "Специализация": "", "Сайт": "", 
+               "Email": "", "SPIN": "", "Scopus ID": "", "Researcher ID": "", "ORCID": ""},
+        "en": {"Name, position, affiliation": "", "Keywords": ""}
+    }
+
+
+def parse_profiles_from_docx(filepath: Path) -> List[Dict[str, Dict[str, str]]]:
+    """
+    Парсит все профили из документа.
+    Каждая таблица обрабатывается как отдельная анкета.
+    
+    Returns:
+        Список профилей, каждый в формате {"ru": {...}, "en": {...}}
+    """
+    doc = Document(filepath)
+    profiles = []
+
+    # Обрабатываем каждую таблицу как отдельную анкету
+    for table in doc.tables:
+        data = {}
+        data_en = {}
+        
+        # Извлекаем данные из таблицы
+        for row in table.rows:
+            cells = row.cells
+            if len(cells) >= 2:
+                key = cells[0].text.strip()
+                value_ru = cells[1].text.strip()
+                value_en = cells[2].text.strip() if len(cells) >= 3 else ""
+                if key:
+                    data[key] = value_ru
+                    data_en[key] = value_en
+        
+        # Проверяем, есть ли в таблице хотя бы минимальные данные (например, ФИО)
+        # Если таблица пустая или не содержит данных профиля, пропускаем её
+        has_data = False
+        for key in data:
+            if data[key].strip() and data[key].strip() != "-":
+                has_data = True
+                break
+        
+        if has_data:
+            try:
+                profile = parse_table_to_profile(table, data, data_en)
+                # Проверяем, что профиль не пустой (есть хотя бы ФИО)
+                if profile["ru"]["ФИО, звание и место работы"] or profile["en"]["Name, position, affiliation"]:
+                    profiles.append(profile)
+            except Exception as e:
+                # Пропускаем таблицы с ошибками
+                print(f"Ошибка при обработке таблицы: {e}")
+                continue
+    
+    return profiles
