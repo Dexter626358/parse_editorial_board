@@ -10,7 +10,7 @@ from werkzeug.utils import secure_filename
 from editor_parser import parse_profiles_from_docx
 import html as html_escape
 
-app = Flask(__name__)
+app = Flask(__name__, template_folder='templates')
 app.config['MAX_CONTENT_LENGTH'] = 50 * 1024 * 1024  # 50MB максимум
 app.config['UPLOAD_FOLDER'] = tempfile.gettempdir()
 
@@ -278,5 +278,6 @@ def test_file():
 if __name__ == '__main__':
     import os
     port = int(os.environ.get('PORT', 5000))
-    app.run(debug=True, host='0.0.0.0', port=port)
+    debug = os.environ.get('FLASK_DEBUG', 'False').lower() == 'true'
+    app.run(debug=debug, host='0.0.0.0', port=port)
 
