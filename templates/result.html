@@ -170,6 +170,21 @@
             background: #218838;
         }
         
+        .download-btn {
+            margin-top: 0;
+            padding: 8px 20px;
+            background: #007bff;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        
+        .download-btn:hover {
+            background: #0056b3;
+        }
+        
         .empty-message {
             color: #999;
             text-align: center;
@@ -200,7 +215,10 @@
                         <div class="empty-message">Нет данных для отображения</div>
                     {% endif %}
                 </div>
-                <button class="copy-btn" onclick="copyToClipboard('html-ru-content')">Копировать HTML</button>
+                <div style="margin-top: 15px; display: flex; gap: 10px;">
+                    <button class="copy-btn" onclick="copyToClipboard('html-ru-content')">Копировать HTML</button>
+                    <button class="download-btn" onclick="downloadHTML('html-ru-content', 'editor_profiles_ru.html')">Скачать HTML</button>
+                </div>
             </div>
         </div>
         
@@ -214,13 +232,15 @@
                         <div class="empty-message">Нет данных для отображения</div>
                     {% endif %}
                 </div>
-                <button class="copy-btn" onclick="copyToClipboard('html-en-content')">Копировать HTML</button>
+                <div style="margin-top: 15px; display: flex; gap: 10px;">
+                    <button class="copy-btn" onclick="copyToClipboard('html-en-content')">Копировать HTML</button>
+                    <button class="download-btn" onclick="downloadHTML('html-en-content', 'editor_profiles_en.html')">Скачать HTML</button>
+                </div>
             </div>
         </div>
         
         <div class="actions">
             <a href="/" class="btn btn-primary">Обработать другой архив</a>
-            <button class="btn btn-secondary" onclick="window.print()">Печать</button>
         </div>
     </div>
     
@@ -274,6 +294,40 @@
             }
             
             document.body.removeChild(textarea);
+        }
+        
+        function downloadHTML(elementId, filename) {
+            const element = document.getElementById(elementId);
+            let htmlContent = '';
+            
+            if (elementId.includes('html')) {
+                // Для HTML получаем исходный HTML (только контент, без обертки)
+                htmlContent = element.innerHTML;
+            } else {
+                // Для текста получаем текстовое содержимое
+                htmlContent = element.textContent || element.innerText;
+            }
+            
+            // Создаем blob и скачиваем только контент (без DOCTYPE и мета-тегов)
+            const blob = new Blob([htmlContent], { type: 'text/html;charset=utf-8' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = filename;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+            
+            // Показываем уведомление
+            const btn = event.target;
+            const originalText = btn.textContent;
+            btn.textContent = '✓ Скачано!';
+            btn.style.background = '#28a745';
+            setTimeout(() => {
+                btn.textContent = originalText;
+                btn.style.background = '#007bff';
+            }, 2000);
         }
     </script>
 </body>
